@@ -1,4 +1,10 @@
+pub mod pdf;
+
+use std::path::Path;
+
 use clap::{Parser, ValueEnum};
+
+use crate::pdf::PDF;
 
 #[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord, ValueEnum)]
 enum Direction {
@@ -59,4 +65,8 @@ struct Config {
 
 fn main() {
     let config = Config::parse();
+
+    let pdf = PDF::from_path(config.pdf_path.as_str());
+
+    pdf.save_pages(Path::new("./output/"));
 }
