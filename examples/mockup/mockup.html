@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <style>
+        /* CSS RESET */
+        html,body,div,p,h1,h2,h3,h4,h5,h6,ul,ol,li,dl,dt,dd,form,fieldset,caption,table,tr,td,th,address,blockquote,img {
+            margin:0;
+            padding:0;
+        }
+
+        img, fieldset, object {
+            border:none;
+        }
+
+        *, *:after, *:before {
+            flex:1 0 auto; /* safari bugfix */
+            box-sizing:border-box;
+        }
+
+        button, label {
+            cursor:pointer;
+        }
+
+        html, body {
+            min-height:100%;
+        }
+
+        body {
+            overflow: hidden;
+        }
+
+        /* OUR STYLING */
+
+        main {
+            display: flex;
+            flex-direction: column;
+        }
+
+        img {
+            object-fit: fill;
+            display: block;
+            width: 100%;
+            height: 100%;
+        }
+
+        video {
+            object-fit: fill;
+        }
+
+        section {
+            width: 100%;
+            height: 100vh;
+            display: flex;
+        }
+
+        section aside {
+            display: flex;
+        }
+
+    </style>
+    <script defer>
+        let index = 0;
+        let oldIndex = 0;
+
+        const NUM_VIDEOS = 2;
+        const CONTENT_PERCENTAGE = 0.33;
+        const RANDOMIZE = true;
+
+        // still need to generalize based on 
+
+        // SLIDE_TIME
+        // DIRECTION
+        // NO AUDIO
+
+        function pauseSection(section) {
+            for (const video of section.querySelectorAll('video')) {
+                video.pause();
+            }
+        }
+
+        function playSection(section) {
+            for (const video of section.querySelectorAll('video')) {
+                video.play();
+                if (RANDOMIZE) {
+                    video.currentTime = video.duration * Math.random();
+                }
+            }
+        }
+
+        window.addEventListener("keydown", (e) => {
+            e.preventDefault();
+            switch (e.key) {
+                case "ArrowDown":
+                    index+=1
+                    break;
+                case "ArrowUp":
+                    index-=1;
+                    break;
+            }
+
+            let size = document.getElementById('main').children.length;
+            if (index < 0) { index = 0; }
+            if (index >= size) { index = size - 1; }
+
+            if (index != oldIndex) {
+                pauseSection(document.getElementById(`slide-${oldIndex}`));
+                oldIndex = index;
+                document.getElementById(`slide-${index}`).scrollIntoView({behavior: "smooth"});
+                playSection(document.getElementById(`slide-${index}`));
+            }
+        });
+
+        document.addEventListener("DOMContentLoaded", () => {
+            function setupSlides() {
+                let width = window.innerWidth
+                || document.documentElement.clientWidth
+                || document.body.clientWidth;
+
+                let height = window.innerHeight
+                || document.documentElement.clientHeight
+                || document.body.clientHeight;
+
+                let sectionDir = "";
+                if (width > height) {
+                    sectionDir = "row";
+                } else {
+                    sectionDir = "column";
+                }
+
+                for (const section of document.querySelectorAll("section")) {
+                    section.style.flexDirection = sectionDir;
+                }
+
+
+                for (const div of document.querySelectorAll("div")) {
+                    let img = div.children[0];
+                    if (width > height) {
+                        div.style.width = `${width * CONTENT_PERCENTAGE}px`;
+                        div.style.height = `${height}px`;
+                        img.width = width * CONTENT_PERCENTAGE;
+                    } else {
+                        div.style.height = `${height * CONTENT_PERCENTAGE}`;
+                        div.style.width = `${width}`;
+                        img.height= width * CONTENT_PERCENTAGE;
+                    }
+                }
+
+                let asideDir = "";
+                if (width > height) {
+                    asideDir = "column";
+                } else {
+                    asideDir = "row";
+                }
+
+                for (const aside of document.querySelectorAll("aside")) {
+                    aside.style.flexDirection = asideDir;
+                }
+
+                let videoPercentage = (1 - CONTENT_PERCENTAGE) / NUM_VIDEOS;
+
+                for (const video of document.querySelectorAll("video")) {
+                    if (width > height) {
+                        video.width = width * (1-CONTENT_PERCENTAGE);
+                        video.height = height * videoPercentage;
+                    } else {
+                        video.height = height * (1-CONTENT_PERCENTAGE);
+                        video.width = height * videoPercentage;
+                    }
+                }
+            }
+
+            setupSlides();
+            window.addEventListener("resize", setupSlides);
+        });
+        
+    </script>
+
+</head>
+<body>
+    <main>
+        <section id="slide-0">
+            <div>
+                <img src="cloud-bg2.jpg"></img>
+            </div>
+            <aside>
+                <video src="familyguy.mp4" ></video>
+                <video src="subway.mp4" ></video>
+            </aside> 
+        </section>
+        <section id="slide-1">
+            <div >
+                <img src="cloud-bg2.jpg"></img>
+            </div>
+            <aside>
+                <video src="subway.mp4" ></video>
+                <video src="familyguy.mp4" ></video>
+            </aside> 
+        </section>
+        <section id="slide-2">
+            <div>
+                <img src="cloud-bg2.jpg"></img>
+            </div>
+            <aside >
+                <video src="familyguy.mp4" ></video>
+                <video src="subway.mp4" ></video>
+            </aside> 
+        </section>
+    </main>
+</body>
+
+
+</html>
