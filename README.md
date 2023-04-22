@@ -8,7 +8,7 @@ Hold your audience's attention with this one simple trick.
 
 ### Standard 
 ```
-attention-holder [pdf_file] [zoomer_video_1] [zoomer_video_2] 
+attention-holder [pdf_file] [zoomer_video_1] [zoomer_video_2] ... [zoomer_video_n]
 ```
 
 - `pdf_file`: presentation/document you want to make palatable to the younger generation
