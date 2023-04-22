@@ -67,8 +67,8 @@
         let oldIndex = 0;
 
         const NUM_VIDEOS = 2;
-        const CONTENT_PERCENTAGE = 0.33;
-        const RANDOMIZE = true;
+        const CONTENT_PERCENTAGE = 0.60;
+        const START_TIME_RANDOMIZE = true;
 
         // still need to generalize based on 
 
@@ -85,7 +85,7 @@
         function playSection(section) {
             for (const video of section.querySelectorAll('video')) {
                 video.play();
-                if (RANDOMIZE) {
+                if (START_TIME_RANDOMIZE) {
                     video.currentTime = video.duration * Math.random();
                 }
             }
@@ -102,7 +102,7 @@
                     break;
             }
 
-            let size = document.getElementById('main').children.length;
+            let size = document.getElementsByTagName('main')[0].children.length;
             if (index < 0) { index = 0; }
             if (index >= size) { index = size - 1; }
 
@@ -137,7 +137,7 @@
 
 
                 for (const div of document.querySelectorAll("div")) {
-                    let img = div.children[0];
+                    let img = div.querySelector("img");
                     if (width > height) {
                         div.style.width = `${width * CONTENT_PERCENTAGE}px`;
                         div.style.height = `${height}px`;
