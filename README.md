@@ -19,8 +19,8 @@ attention-holder [pdf_file] [zoomer_video_1] [zoomer_video_2] ... [zoomer_video_
 
 - `--output=[file_name]`
     - Name of the file to output to
-    - Defaults to `zoomer.html`
-    - The output format will be html, so you should probably use a .html file extension.
+    - Defaults to `zoomer`
+    - The output format will be html, providing a .html extension is not necessary
         - In the future we may support output to future formats
 - `--ordered`
     - If specified, use the videos in the order given to the program. 
