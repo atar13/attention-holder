@@ -8,12 +8,11 @@ use poppler::{Document, Page};
 
 pub struct PDF {
     pub title: String,
-    document: Document,
-    pages: Vec<Page>,
+    pub pages: Vec<Page>,
 }
 
 impl PDF {
-    pub fn from_path(path: &str) -> PDF {
+    pub fn from_path(path: &str) -> Self {
         let abs_pdf_path = Path::canonicalize(Path::new(path))
             .expect(format!("Could not access {}.", path,).as_str());
         let document =
@@ -27,11 +26,9 @@ impl PDF {
             acc.push(document.page(i).unwrap());
             acc
         });
-        // let permissions = doc.permissions();
 
         PDF {
             title,
-            document,
             pages,
         }
     }
