@@ -1,6 +1,6 @@
 use std::{
     fs::File,
-    path::Path,
+    path::{Path, PathBuf},
 };
 
 use cairo::{Context, Format, ImageSurface};
@@ -33,7 +33,7 @@ impl PDF {
         }
     }
 
-    pub fn save_pages(&self, output_dir: &Path) {
+    pub fn save_pages(&self, output_dir: &PathBuf) -> Vec<PathBuf> {
         // TODO: add actual error handling
         if !output_dir.exists() {
             panic!("Must create output directory") }
@@ -41,14 +41,18 @@ impl PDF {
             panic!("Must save pages to a directory")
         }
 
+        let mut slides = Vec::new();
         for (i, page) in self.pages.iter().enumerate() {
+            let slide_path = PathBuf::from(format!("slide_{}.png", i + 1));
+            slides.push(slide_path.clone());
             save_page_to_png(
                 &page,
                 output_dir
-                    .join(Path::new(&format!("slide_{}.png", i + 1)))
+                    .join(slide_path)
                     .as_path(),
             )
         }
+        slides
     }
 }
 

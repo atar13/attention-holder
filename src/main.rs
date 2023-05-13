@@ -1,6 +1,7 @@
 pub mod pdf;
+pub mod html;
 
-use std::path::Path;
+use std::path::PathBuf;
 
 use clap::{Parser, ValueEnum};
 
@@ -22,7 +23,7 @@ struct Config {
     // list of videos to display on the side
     zoomer_videos: Vec<String>,
 
-    #[arg(short, long, help = "Name of the file to output to", default_value_t = String::from("zoomer.html"))]
+    #[arg(short, long, help = "Name of the folder to output to", default_value_t = String::from("output"))]
     output: String,
 
     #[arg(
@@ -68,5 +69,9 @@ fn main() {
 
     let pdf = PDF::from_path(config.pdf_path.as_str());
 
-    pdf.save_pages(Path::new("./output/"));
+    let output_dir = PathBuf::from(config.output);
+
+    let slide_imgs = pdf.save_pages(&output_dir);
+    let html = html::generate_html(slide_imgs, config.zoomer_videos.iter().map(|x| PathBuf::from(x)).collect());
+    html.save_to_file(&output_dir.join(format!("{}.html", pdf.title)));
 }
