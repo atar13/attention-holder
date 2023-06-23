@@ -1,27 +1,112 @@
-use std::io::Write;
+use std::ffi::OsStr;
+use std::{io::Write, fmt::Display};
 use std::path::PathBuf;
 use std::fs::File;
 
+use html::metadata::Head;
+use html::scripting;
 
+use build_html::{HtmlPage, Html, HtmlContainer, Container, ContainerType};
+
+
+#[derive(Debug)]
+struct Video {
+    src: String,
+    loops: bool
+}
+
+impl Video {
+    pub fn new(src: impl ToString, loops: bool) -> Self {
+        Video { src: src.to_string(), loops }
+    }
+
+}
+
+
+impl Html for Video {
+    fn to_html_string(&self) -> String {
+        if self.loops {
+            format!("<video loop src={}></video>", self.src)
+        } else {
+            format!("<video src={}></video>", self.src)
+        }
+    }
+}
 
 pub struct HTML {
     content: String
 }
 
-pub fn generate_html(slide_imgs: Vec<PathBuf>, zoomer_vids: Vec<PathBuf>) -> HTML {
-    let mut html = String::from("<!DOCTYPE html>\n\
-                            <html lang=\"en\">\n");
-    html = html + &generate_head();
-    html = html + &generate_body(slide_imgs, zoomer_vids);
-    html = html + "</html>";
 
-    HTML { content: html }
+pub fn generate_html(document_title: String, slide_imgs: Vec<PathBuf>, zoomer_vids: Vec<PathBuf>) -> HTML {
+    // let script = scripting::Script::builder().text("hi").build();
+    // let head = Head::builder().
+    //     meta(|x| x.charset("UTF-8")).
+    //     meta(|x| x.http_equiv("X-UA-Compatible").content("IE=edge")).
+    //     meta(|x| x.name("viewport").content("width=device-width, initial-scale=1.0")).
+    //     title(|x| x.text(document_title)).
+    //     style(|x| x.text("/* CSS goes here */")).
+    //     push(script).
+    //     build();
+    // println!("html:\n{}", head.to_string());
+
+    // let page = HtmlPage::new().
+    //     with_meta(vec![("charset", "utf-8")]).
+    //     with_meta(vec![("http-equiv", "X-UA-Compatible"), ("content", "IE=edge")]).
+    //     with_meta(vec![("name", "viewport"), ("content", "width=device-width"), ("initial-scale", "1.0")]).
+    //     with_title(document_title).
+    //     with_style(include_str!("style.css")).
+    //     with_script_literal(include_str!("script.js")).
+    //     with_container(
+    //         slide_imgs.iter().enumerate().fold(
+    //             Container::new(ContainerType::Main), 
+    //             |acc, (idx, img)| acc.with_container(
+    //                 Container::new(ContainerType::Section).with_attributes(vec![("id", format!("slide-{idx}").as_str())]).
+    //                 with_container(Container::new(ContainerType::Div).with_attributes(vec![("class", "presentation")]).
+    //                     with_image(img.to_string_lossy(), img.file_name().unwrap_or(OsStr::new("slide")).to_string_lossy())
+    //                 ).
+    //                 with_container(
+    //                     zoomer_vids.iter().fold(
+    //                         Container::new(ContainerType::Div).with_attributes(vec![("class", "zoomer-vid")]), 
+    //                         |acc, vid| acc.with_html(Video::new(vid.to_string_lossy(), true))
+    //                     )
+    //                 )
+    //             )
+    //         )
+    //     );
+    let page = HtmlPage::new().
+        with_meta(vec![("charset", "utf-8")]).
+        with_meta(vec![("http-equiv", "X-UA-Compatible"), ("content", "IE=edge")]).
+        with_meta(vec![("name", "viewport"), ("content", "width=device-width"), ("initial-scale", "1.0")]).
+        with_title(document_title).
+        with_style(include_str!("style.css")).
+        with_script_literal(include_str!("script.js")).
+        with_container(Container::new(ContainerType::Main).
+            with_container(
+                slide_imgs.iter().enumerate().fold(
+                    Container::new(ContainerType::Div).with_attributes(vec![("id", "presentation")]), 
+                    |acc, (idx, img)| acc.
+                        with_image_attr(img.to_string_lossy(), img.file_name().unwrap_or(OsStr::new("slide")).to_string_lossy(), vec![("id", format!("slide-{idx}").as_str()), ("class", "slide")])
+                )
+            ).
+            with_container(
+                zoomer_vids.iter().fold(
+                    Container::new(ContainerType::Div).with_attributes(vec![("id", "zoomer-vid")]), 
+                    |acc, vid| acc.with_html(Video::new(vid.to_string_lossy(), true))
+                )
+            )
+        );
+
+
+    HTML { content: page.to_html_string() }
+    // page.to_html_string()
 }
 
 impl HTML {
     pub fn save_to_file(&self, path: &PathBuf) {
         let mut file = File::create(path).expect(&format!("Could not create html file at {}", path.to_string_lossy()));
         file.write_all(self.content.as_bytes()).expect(&format!("Could not write to {}", path.to_string_lossy()));
+        println!("Saved to {:?}", path);
     }
 }
 
@@ -85,6 +170,11 @@ fn generate_head() -> String {
 
             section aside {{
                 display: flex;
+            }}
+
+            #controls {{
+                z-index: 1000;
+                position: absolute;
             }}
 
         </style>
@@ -201,16 +291,29 @@ fn generate_head() -> String {
 
                 setupSlides();
                 window.addEventListener(\"resize\", setupSlides);
+
+                window.addEventListener(\"mousemove\", (event) => {{
+                    const controls = getElementById(\"controls\");
+                    console.log(controls.style.color);
+                    console.log(controls.style.background-color);
+                    controls.style.background-color = \"blue\";
+                }});
             }});
             
         </script>
 
-    </head>")
+    </head>\n")
 }
 
 fn generate_body(slide_imgs: Vec<PathBuf>, zoomer_vids: Vec<PathBuf>) -> String {
     let mut body = String::from("<body>\n\
                                 <main>\n");
+    body = body + &format!("<div id=\"controls\">
+                            <h1>
+                                Button
+                            </h1>
+                           </div>
+                          ");
     body = body + &slide_imgs.iter().enumerate().fold("".to_owned(), 
                                          |acc, (idx, slide)| acc + &generate_page(slide, idx, &zoomer_vids)
                                          );
@@ -222,11 +325,12 @@ fn generate_body(slide_imgs: Vec<PathBuf>, zoomer_vids: Vec<PathBuf>) -> String 
 
 fn generate_page(slide_img: &PathBuf, slide_idx: usize, zoomer_vids: &Vec<PathBuf>) -> String {
 
-    let mut page = format!("<section id=\"slide-{}\">\n<div>\n<img src=\"{}\"></img>\n</div>", slide_idx, slide_img.to_string_lossy());
-    page = page + "<aside>";
+    let mut page = format!("<section id=\"slide-{}\">\n\t<div><img src=\"{}\"></img></div>\n", slide_idx, slide_img.to_string_lossy());
+    page = page + "\t<aside>";
     page = page + &zoomer_vids.iter().fold("".to_owned(), |acc, vid| 
-                                         acc + &format!("<video src=\"{}\" ></video>\n", vid.to_string_lossy()));
-    page = page + "</aside>";
+                                         acc + &format!("<video src=\"{}\" ></video>", vid.to_string_lossy()));
+    page = page + "</aside>\n";
+    page = page + "</section>\n";
     page
 }
 

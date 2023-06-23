@@ -1,7 +1,7 @@
 pub mod pdf;
 pub mod html;
 
-use std::path::PathBuf;
+use std::{path::PathBuf, fs};
 
 use clap::{Parser, ValueEnum};
 
@@ -71,7 +71,15 @@ fn main() {
 
     let output_dir = PathBuf::from(config.output);
 
+    let mut vid_relative_paths: Vec<PathBuf> = Vec::new();
+    let vid_pathbufs: Vec<PathBuf> = config.zoomer_videos.iter().map(|x| PathBuf::from(x)).collect();
+    for vid in &vid_pathbufs {
+        let file_name = vid.file_name().unwrap();
+        fs::copy(vid, &output_dir.join(file_name)).unwrap();
+        vid_relative_paths.push(file_name.into());
+    }
+
     let slide_imgs = pdf.save_pages(&output_dir);
-    let html = html::generate_html(slide_imgs, config.zoomer_videos.iter().map(|x| PathBuf::from(x)).collect());
+    let html = html::generate_html(pdf.title.to_owned(), slide_imgs, vid_relative_paths);
     html.save_to_file(&output_dir.join(format!("{}.html", pdf.title)));
 }

@@ -6,8 +6,10 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
+build_html = "2.4.0"
 cairo-rs = { version = "0.17.0", features = ["png"] }
 clap = { version = "4.2.4", features = ["derive"] }
+html = "0.5.2"
 poppler-rs = "0.21.0"
 
 [dev-dependencies]

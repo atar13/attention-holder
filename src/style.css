@@ -1,0 +1,80 @@
+/* CSS RESET */
+html,body,div,p,h1,h2,h3,h4,h5,h6,ul,ol,li,dl,dt,dd,form,fieldset,caption,table,tr,td,th,address,blockquote,img {
+    margin:0;
+    padding:0;
+}
+
+img, fieldset, object {
+    border:none;
+}
+
+*, *:after, *:before {
+    flex:1 0 auto; /* safari bugfix */
+    box-sizing:border-box;
+}
+
+button, label {
+    cursor:pointer;
+}
+
+html, body {
+    min-height:100%;
+}
+
+body {
+    overflow: hidden;
+}
+
+/* OUR STYLING */
+
+main {
+    display: flex;
+    flex-direction: row;
+}
+
+#presentation {
+    width: 60%;
+    display: flex;
+    flex-direction: column;
+}
+
+img {
+    /* object-fit: scale-down;  */
+    /* display: block; */
+    /* width: 100%; */
+    height: 100vh;
+    max-width: 100%;
+    /* height: auto; */
+    object-fit: contain;
+}
+
+/* .slide { */
+/*     display: block; */
+/*     width: 100%; */
+/*     height: 100vh; */
+/* } */
+
+/**/
+/* video { */
+/*     object-fit: fill; */
+/* } */
+/**/
+/* section { */
+/*     width: 100%; */
+/*     height: 100vh; */
+/*     display: flex; */
+/* } */
+/**/
+#zoomer-vid {
+    /* display: flex; */
+}
+/* section { */
+/*     display: flex; */
+/*     flex-direction: column; */
+/* } */
+
+video {
+    object-fit: fill;
+    height: 100vh;
+    width: 100%;
+}
