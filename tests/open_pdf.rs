@@ -1,6 +1,6 @@
 mod common;
 
-use std::{error::Error, env};
+use std::{env, error::Error};
 
 use attention_holder::pdf::PDF;
 
