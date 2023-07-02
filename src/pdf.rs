@@ -12,6 +12,7 @@ pub struct PDF {
 }
 
 impl PDF {
+    // Create a PDF from a path that points to a PDF file
     pub fn from_path(path: &str) -> Self {
         let abs_pdf_path = Path::canonicalize(Path::new(path))
             .expect(format!("Could not access {}.", path,).as_str());
@@ -27,16 +28,15 @@ impl PDF {
             acc
         });
 
-        PDF {
-            title,
-            pages,
-        }
+        PDF { title, pages }
     }
 
-    pub fn save_pages(&self, output_dir: &PathBuf) -> Vec<PathBuf> {
+    // Save pages of a PDF to a directory and return a vector of filenames
+    pub fn save_pages(&self, output_dir: &Path) -> Vec<PathBuf> {
         // TODO: add actual error handling
         if !output_dir.exists() {
-            panic!("Must create output directory") }
+            panic!("Must create output directory")
+        }
         if !output_dir.is_dir() {
             panic!("Must save pages to a directory")
         }
@@ -45,17 +45,13 @@ impl PDF {
         for (i, page) in self.pages.iter().enumerate() {
             let slide_path = PathBuf::from(format!("slide_{}.png", i + 1));
             slides.push(slide_path.clone());
-            save_page_to_png(
-                &page,
-                output_dir
-                    .join(slide_path)
-                    .as_path(),
-            )
+            save_page_to_png(&page, output_dir.join(slide_path).as_path())
         }
         slides
     }
 }
 
+// Helper to save a Page of a PDF to a png file at a given path
 fn save_page_to_png(page: &Page, path: &Path) {
     // TODO: add actual error handling
     match path.extension() {

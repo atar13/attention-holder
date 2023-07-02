@@ -1,57 +1,53 @@
+// presentation slide index
 let index = 0;
+// previous presentation slide index
 let oldIndex = 0;
 
-const NUM_VIDEOS = 2;
-const CONTENT_PERCENTAGE = 0.60;
-const START_TIME_RANDOMIZE = true;
+// current mouse positions
+let mouse_x = 0;
+let mouse_y = 0;
 
-// still need to generalize based on 
+// keep track of presentation width as it's resized
+let slidesWidth = 0;
 
-// SLIDE_TIME
-// DIRECTION
-// NO AUDIO
-
-function pauseSection(section) {
-    for (const video of section.querySelectorAll('video')) {
-        video.pause();
-    }
-}
-
-function playSection(section) {
-    for (const video of section.querySelectorAll('video')) {
-        video.play();
-        if (START_TIME_RANDOMIZE) {
-            video.currentTime = video.duration * Math.random();
-        }
-    }
-}
-
-window.addEventListener("keydown", (e) => {
-    e.preventDefault();
-    switch (e.key) {
-        case "ArrowDown":
-            index+=1
-            break;
-        case "ArrowUp":
-            index-=1;
-            break;
-    }
-
+// change slide by a given offset
+function changeSlide(i) {
+    index += i;
     let size = document.getElementById('presentation').children.length;
     if (index < 0) { index = 0; }
     if (index >= size) { index = size - 1; }
 
     if (index != oldIndex) {
-        // pauseSection(document.getElementById(`slide-${oldIndex}`));
-        // document.getElementById(`slide-${index}`).scrollIntoView({behavior: "smooth"});
         document.getElementById(`slide-${oldIndex}`).style.display = "none";
         document.getElementById(`slide-${index}`).style.display = "block";
-        // playSection(document.getElementById(`slide-${index}`));
         oldIndex = index;
+    }
+}
+
+// listen for up/down keypresses to change slides
+window.addEventListener("keydown", (e) => {
+    e.preventDefault();
+    switch (e.key) {
+        case "ArrowDown":
+            changeSlide(1);
+            break;
+        case "ArrowRight":
+            changeSlide(1);
+            break;
+        case "ArrowUp":
+            changeSlide(-1);
+            break;
+        case "ArrowLeft":
+            changeSlide(-1);
+            break;
     }
 });
 
 document.addEventListener("DOMContentLoaded", () => {
+    const resizer = document.getElementById("resizer");
+    const slidesElement = resizer.previousElementSibling;
+    const videoElement = resizer.nextElementSibling;
+
     function setupSlides() {
         let width = window.innerWidth
         || document.documentElement.clientWidth
@@ -68,50 +64,66 @@ document.addEventListener("DOMContentLoaded", () => {
             sectionDir = "column";
         }
 
-        for (const section of document.querySelectorAll("section")) {
-            section.style.flexDirection = sectionDir;
+        for (const main of document.querySelectorAll("main")) {
+            main.style.flexDirection = sectionDir;
         }
-
-
-        // for (const div of document.querySelectorAll("div")) {
-        //     let img = div.querySelector("img");
-        //     if (width > height) {
-        //         div.style.width = `${width * CONTENT_PERCENTAGE}px`;
-        //         div.style.height = `${height}px`;
-        //         img.width = width * CONTENT_PERCENTAGE;
-        //     } else {
-        //         div.style.height = `${height * CONTENT_PERCENTAGE}`;
-        //         div.style.width = `${width}`;
-        //         img.height= width * CONTENT_PERCENTAGE;
-        //     }
-        // }
-
-        // document.getElementById('slide-0').style.display = "block";
-
-        // let asideDir = "";
-        // if (width > height) {
-        //     asideDir = "column";
-        // } else {
-        //     asideDir = "row";
-        // }
-        //
-        // for (const aside of document.getElementsByClassName("zoomer-vid")) {
-        //     aside.style.flexDirection = asideDir;
-        // }
-        //
-        // let videoPercentage = (1 - CONTENT_PERCENTAGE) / NUM_VIDEOS;
-        //
-        // for (const video of document.querySelectorAll("video")) {
-        //     if (width > height) {
-        //         video.width = width * (1-CONTENT_PERCENTAGE);
-        //         video.height = height * videoPercentage;
-        //     } else {
-        //         video.height = height * (1-CONTENT_PERCENTAGE);
-        //         video.width = height * videoPercentage;
-        //     }
-        // }
     }
+
+    // initial setup for resizing when mouse is clicked
+    function startResize (e) {
+        mouse_x = e.clientX;
+        mouse_y = e.clientY;
+        slidesWidth = slidesElement.getBoundingClientRect().width;
+
+        document.addEventListener('mousemove', resize);
+        document.addEventListener('mouseup', stopResize);
+    }
+
+    // resizes width of slides according to mouse position
+    function resize(e) {
+        // change in x position on mouse movement
+        const dx = e.clientX - mouse_x;
+
+        const newLeftWidth = ((slidesWidth + dx) * 100) / resizer.parentNode.getBoundingClientRect().width;
+        slidesElement.style.width = `${newLeftWidth}%`;
+
+        resizer.style.cursor = 'col-resize';
+        document.body.style.cursor = 'col-resize';
+
+        slidesElement.style.userSelect = 'none';
+        slidesElement.style.pointerEvents = 'none';
+
+        videoElement.style.userSelect = 'none';
+        videoElement.style.pointerEvents = 'none';
+    }
+
+    // handle letting go of the mouse to stop resizing content
+    function stopResize (e) {
+        resizer.style.removeProperty('cursor');
+        document.body.style.removeProperty('cursor');
+
+        slidesElement.style.removeProperty('user-select');
+        slidesElement.style.removeProperty('pointer-events');
+
+        videoElement.style.removeProperty('user-select');
+        videoElement.style.removeProperty('pointer-events');
+
+        document.removeEventListener('mousemove', resize);
+        document.removeEventListener('mouseup', stopResize);
+    };
+
+    function clickNextSlide (e) {
+        // ignore event if we clicked on the resizer since that element is used to resize
+        if (e.target.id == "resizer") {
+            return
+        }
+        changeSlide(1);
+    }
+
 
     setupSlides();
     window.addEventListener("resize", setupSlides);
+
+    window.addEventListener("click", clickNextSlide);
+    resizer.addEventListener('mousedown', startResize);
 });

@@ -1,59 +1,27 @@
-pub mod pdf;
 pub mod html;
+pub mod pdf;
 
-use std::{path::PathBuf, fs};
+use std::io;
+use std::io::ErrorKind::AlreadyExists;
+use std::{
+    fs,
+    path::{Path, PathBuf},
+};
 
-use clap::{Parser, ValueEnum};
+use clap::Parser;
 
 use crate::pdf::PDF;
 
-#[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord, ValueEnum)]
-enum Direction {
-    UP,
-    DOWN,
-    LEFT,
-    RIGHT,
-}
-
 #[derive(Parser)]
 #[command(version, about = "Hold your audience's attention during presentations", long_about = None)]
-struct Config {
+pub struct Config {
     // path to pdf file with actual content
     pdf_path: String,
-    // list of videos to display on the side
-    zoomer_videos: Vec<String>,
+    // video to display on the side
+    zoomer_video: String,
 
     #[arg(short, long, help = "Name of the folder to output to", default_value_t = String::from("output"))]
     output: String,
-
-    #[arg(
-        long,
-        help = "Use the videos in the order given, otherwise order is randomized",
-        default_value_t = false
-    )]
-    ordered: bool,
-
-    #[arg(
-        short,
-        long,
-        help = "Number of zoomer videos to include in each slide",
-        default_value_t = 1
-    )]
-    zoomer_level: u8,
-
-    #[arg(short, long, help = "Percentage of the screen the actual content should take up", default_value_t = 50, value_parser = clap::value_parser!(u8).range(1..100))]
-    content_percentage: u8,
-
-    #[arg(
-        short,
-        long,
-        help = "The amount of time the presentation should wait on each slide before automatically advancing. 0 will not adance automatically",
-        default_value_t = 0
-    )]
-    slide_time: u8,
-
-    #[arg(short, long, help = "Specifies the direction that the presentation should flow", value_enum, default_value_t = Direction::DOWN)]
-    direction: Direction,
 
     #[arg(
         short,
@@ -67,19 +35,45 @@ struct Config {
 fn main() {
     let config = Config::parse();
 
-    let pdf = PDF::from_path(config.pdf_path.as_str());
+    let pdf = PDF::from_path(&config.pdf_path);
 
-    let output_dir = PathBuf::from(config.output);
+    let output_dir = Path::new(&config.output);
+    let res = fs::create_dir(&output_dir);
+    ignore_dir_already_exists(res, output_dir);
 
-    let mut vid_relative_paths: Vec<PathBuf> = Vec::new();
-    let vid_pathbufs: Vec<PathBuf> = config.zoomer_videos.iter().map(|x| PathBuf::from(x)).collect();
-    for vid in &vid_pathbufs {
-        let file_name = vid.file_name().unwrap();
-        fs::copy(vid, &output_dir.join(file_name)).unwrap();
-        vid_relative_paths.push(file_name.into());
-    }
+    let assets_dir = output_dir.join("assets");
+    let res = fs::create_dir(&assets_dir);
+    ignore_dir_already_exists(res, output_dir);
+
+    let vid = PathBuf::from(&config.zoomer_video);
+    let new_vid_path = assets_dir.join(vid.file_name().unwrap());
+    fs::copy(&vid, &new_vid_path).unwrap();
 
     let slide_imgs = pdf.save_pages(&output_dir);
-    let html = html::generate_html(pdf.title.to_owned(), slide_imgs, vid_relative_paths);
-    html.save_to_file(&output_dir.join(format!("{}.html", pdf.title)));
+
+    let mut relative_vid_path = PathBuf::new();
+    for (idx, component) in new_vid_path.iter().enumerate() {
+        if idx == 0 {
+            continue;
+        }
+        relative_vid_path = relative_vid_path.join(component);
+    }
+
+    let document = html::generate_html(
+        pdf.title.to_owned(),
+        slide_imgs,
+        &relative_vid_path,
+        &config,
+    );
+    document.save_to_file(&output_dir.join(format!("{}.html", pdf.title)));
+}
+
+// ignore error if folder already exists
+fn ignore_dir_already_exists(res: io::Result<()>, dir: &Path) {
+    if let Err(e) = res {
+        match e.kind() {
+            AlreadyExists => (),
+            _ => panic!("Cannot create directory: {}", dir.display()),
+        }
+    }
 }
